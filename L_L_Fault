@@ -1,0 +1,209 @@
+% Fault analysis
+
+clear all;
+clc;
+diary on
+diary('Line to line fault')
+j=sqrt(-1);
+nb=input('enter the no of buses:');
+f=input('enter the bus no at which the fault occur:');
+mva=input('enter the base MVA:');
+kv=input('enter the base kva:');
+ 
+%zero sequence reactance
+    disp('zero sequence component')
+    disp('menu');
+    disp('1. star-star');
+    disp('2. delta-star');
+    ch=input('enter your choice:');
+    if ch==1
+        for i=1:nb+1
+        x(i)=input('enter the reactance of each element:');
+        end;
+        m=nb+2;
+        s=0;
+        for k=1:f
+             s=s+(j*x(k));
+             x(m)=imag(s);
+        end;
+        a1=0;
+        for l=f+1:m
+             a1=a1+(1/(j*x(l)));
+        end;
+        zo=1/a1;
+        disp('zero sequence component:');
+        disp(zo);
+    else
+        zo=x(f+1);
+        disp(zo);
+    end
+disp('positive and negative sequence component');
+for i=1:nb+1
+    x(i)=input('enter the reactance of each element:');
+end;
+%positive sequence reactance
+m1=nb+2;
+s=0;
+for k=1:f
+    s=s+(j*x(k));
+    x(m1)=imag(s);
+end;
+a1=0;
+for l=f+1:m1
+    a1=a1+(1/(j*x(l)));
+end;
+    zp=1/a1;
+    disp('positive sequence component:');
+    disp(zp);
+    %negative sequence reactance
+    zn=zp;
+    disp('negative sequence component:');
+    disp(zn);
+    
+    disp('FAULT CURRENT');
+    disp('main menu');
+    disp('1. 3-phase fault');
+    disp('2. line-to-ground fault');
+    disp('3. line-to-line fault');
+    disp('4. double line-to-ground fault');
+    ch1=input('enter your choice:');
+    zf=input('enter the fault impedance:');
+    switch lower(ch1)
+        case 1
+            zth=zp;
+            fi=1/(zth+zf);
+            disp('fault current in pu:');
+            disp(fi);
+            fi1=abs((fi*mva/((3^(1/2))*kv))/j);
+            disp('fault current in kiloamperes:');
+            disp(fi1);
+            fmva=abs(fi)*100;
+            disp('fault MVA:');
+            disp(fmva);
+            %post fault voltages
+            ig(1)=fi*x(1)/(x(1)+x(m1));
+            ig(2)=fi*x(m1)/(x(1)+x(m1));
+            disp('current contribution of each generator:');
+            disp(ig);
+            for p=1:nb 
+                    l=0;
+                    for k=1:p
+                        l=l+(j*x(k));
+                    end;
+                    vf(p)=1-(ig(1)*l);
+                    vf(f)=0;    
+            end;
+            disp('post fault voltages:')
+            disp(vf);
+            for e=1:nb-1
+                for f=2:nb
+                    ct(e,f)=(vf(e)-vf(f))/(j*x(e+1));
+                    
+                end;
+            end;
+            disp('current flowing in each bus:');
+            disp(ct);     
+        case 2
+            fi=3/(zp+zn+zo+zf);
+            disp('fault current in pu:');
+            disp(fi);
+            fi1=abs((fi*mva/((3^(1/2))*kv))/j);
+            disp('fault current in kizoamperes:');
+            disp(fi1);
+            fmva=abs(fi)*100;
+            disp('fault MVA:');
+            disp(fmva);
+            %post fault voltages
+            ig(1)=fi*x(1)/(x(1)+x(m1));
+            ig(2)=fi*x(m1)/(x(1)+x(m1));
+            disp('current contribution of each generator:');
+            disp(ig);
+            for p=1:nb 
+                    l=0;
+                    for k=1:p
+                        l=l+(j*x(k));
+                    end;
+                    vf(p)=1-(ig(1)*l);
+                    vf(f)=0;
+            end;
+            disp('post fault voltages:')
+            disp(vf);
+            for e=1:nb-1
+                for f=2:nb
+                    ct(e,f)=(vf(e)-vf(f))/(j*x(e+1));
+                    
+                end;
+            end;
+            disp('current flowing in each bus:');
+            disp(ct);     
+        case 3
+            fi=-((j*sqrt(3))/(zp+zn+zf));
+            disp('fault current in pu:');
+            disp(fi);
+            fi1=abs((fi*mva/((3^(1/2))*kv))/j);
+            disp('fault current in kiloamperes:');
+            disp(fi1);
+            fmva=abs(fi)*100;
+            disp('fault MVA:');
+            disp(fmva);
+            %post fault voltages
+            ig(1)=fi*x(1)/(x(1)+x(m1));
+            ig(2)=fi*x(m1)/(x(1)+x(m1));
+            disp('current contribution of each generator:');
+            disp(ig);
+            for p=1:nb 
+                    l=0;
+                    for k=1:p
+                        l=l+(j*x(k));
+                    end;
+                    vf(p)=1-(ig(1)*l);
+                    vf(f)=0;
+            end;
+            disp('post fault voltages:')
+            disp(vf);
+            for e=1:nb-1
+                for f=2:nb
+                    ct(e,f)=(vf(e)-vf(f))/(j*x(e+1));
+                    
+                end;
+            end;
+            disp('current flowing in each bus:');
+            disp(ct);     
+        case 4
+            iap=(zp+((zn*zo)/(zn+zo)))^-1;
+            iao=-((iap*zn)/(zn+zo));
+            fi=3*iao;
+            disp('fault current in pu:');
+            disp(fi);
+            fi1=abs((fi*mva/((3^(1/2))*kv))/j);
+            disp('fault current in kiloamperes:');
+            disp(fi1);
+            fmva=abs(fi)*100;
+            disp('fault MVA:');
+            disp(fmva);  
+            %post fault voltages
+            ig(1)=fi*x(1)/(x(1)+x(m1));
+            ig(2)=fi*x(m1)/(x(1)+x(m1));
+            disp('current contribution of each generator:');
+            disp(ig);
+            for p=1:nb 
+                    l=0;
+                    for k=1:p
+                        l=l+(j*x(k));
+                    end;
+                    vf(p)=1-(ig(1)*l);
+                    vf(f)=0;
+            end;
+            disp('post fault voltages:')
+            disp(vf);
+            for e=1:nb-1
+                for f=2:nb
+                    ct(e,f)=(vf(e)-vf(f))/(j*x(e+1));
+                    
+                end;
+            end;
+            disp('current flowing in each bus:');
+            disp(ct);     
+    end
+    
+    diary off
