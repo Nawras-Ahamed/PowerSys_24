@@ -1,0 +1,290 @@
+% Power Flow Analysis - NR & FDLF method
+clear all;
+clc;
+type=[0;0;0];
+bmva=input('Enter the base MVA:');
+n=input('Enter the number of buses: ');
+y=zeros(n);
+for i=1:n
+    for j1=i:n
+        if i~=j1
+            disp('The buses are');
+            disp(i)
+            disp(j1)
+            z(i,j1)=input('Enter the impedance value: ');
+            z(j1,i)=z(i,j1);
+            hlc(i,j1)=input('Enter the half line charge value:');
+            hlc(j1,i)=hlc(i,j1);
+        end
+    end
+end
+'Input'
+disp(z);
+for i=1:n
+    for j1=1:n
+        if z(i,j1)~=0
+          y(i,j1)=-1/z(i,j1);
+        end
+            y(j1,i)=y(i,j1);
+            if i~=j1
+                y(i,i)=y(i,i)-y(i,j1)+hlc(i,j1);
+            end
+        end
+end
+'Admittance matrix'
+disp(y);
+v=[0;0;0];
+Psp=[0;0;0];
+Qsp=[0;0;0];
+v(1)= input('Enter the slack bus voltage: ');
+type(1)=0;
+npq=0;
+npv=1;
+for i= 2:n
+    disp('The bus number is:');
+    disp(i);
+    disp('1. PQ bus 2. PV bus');
+    bt= input('Enter the bus type: ');
+    switch(bt)
+        case(1)
+            type(i)=1;
+            pg(i)=0;
+            qg(i)=0;
+            pl(i)= input('Enter the real power in pu: ');
+            ql(i)= input('Enter the reactive power in pu: ');
+            Psp(i)=pg(i)-pl(i);
+            Qsp(i)=qg(i)-ql(i);
+            v(i)=1+(j*0);
+            npq=npq+1;
+        case(2)
+            type(i)=2;
+            pg(i)= input('Enter the real power in pu: ');
+            qg(i)=0;
+            pl(i)=0;
+            ql(i)=0;
+            Psp(i)=pg(i)-pl(i);
+            Qsp(i)=qg(i)-ql(i);
+            v(i)= input('Enter the voltage in pu: ');
+            npv=npv+1;
+    end
+end
+del=angle(v);
+G = abs(y)               
+B= angle(y)
+pv=[0;0];
+pv = find(type == 0 | type == 2);
+pq = find(type == 1);
+Tol=1;
+iter=1;
+itermax = input('Enter the number of iterations: ');
+e= input('Enter the value of convergence criterion: ');
+al=input('Enter the acceleration factor: ');
+disp('The available methods to obtain power flow solution for the given system:');
+disp('1. Newton Raphson Method');
+disp('2. FDLF method');
+disp('3. Exit');
+CH=input('Enter your choice:')
+switch(CH)
+    case(1)
+        while(Tol > e & iter<=itermax)
+            P = zeros(n,1);
+            Q = zeros(n,1);
+            for i = 1:n
+                for k = 1:n
+                    P(i) = P(i) + v(i)* v(k)* G(i,k) * cos( B(i,k)+ del(k) - del(i)); 
+                    Q(i) = Q(i) - v(i)* v(k)* G(i,k) * sin( B(i,k)+ del(k) - del(i)); 
+                end
+            end
+            dPa = Psp-P;
+            dQa = Qsp-Q;
+            k = 1;
+            dQ = zeros(npq,1);
+            dP = dPa(2:n);
+            for i = 1:n
+                if type(i) == 1
+                    dQ(k,1) = dQa(i);
+                    k = k+1;
+                end
+            end
+            M = [dP; dQ]; 
+            J1 = zeros(n-1,n-1);
+            for i = 1:(n-1)
+                m = i+1;
+                for k = 1:(n-1)
+                    n1 = k+1;
+                    if n1 == m
+                        for n1 = 1:n
+                            J1(i,k) = J1(i,k) + v(m)* v(n1)* G(m,n1)* sin( B(m,n1)+del(n1)-del(m));
+                        end
+                        J1(i,k) = J1(i,k) - v(m)^2*G(m,m)*sin( B(m,m) );
+                    else
+                        J1(i,k) = -v(m)* v(n1)* G(m,n1)*sin( B(m,n1)+del(n1)-del(m));
+                    end
+                end
+            end
+            J2 = zeros(n-1,npq);
+            for i = 1:(n-1)
+                m = i+1;
+                for k = 1:npq
+                    n1 = pq(k);
+                    if n1 == m
+                        for n1 = 1:n
+                            J2(i,k) = J2(i,k) + v(n1)*G(m,n1)*cos( B(m,n1)+del(n1)-del(m) );
+                        end
+                            J2(i,k) = J2(i,k) + v(m)*G(m,m)*cos( B(m,m) );
+                    else
+                                J2(i,k) = v(m)*G(m,n1)*cos( B(m,n1)+del(n1)-del(m) );
+                    end
+                end
+            end
+            J3 = zeros(npq,n-1);
+            for i = 1:npq
+                m = pq(i);
+                for k = 1:(n-1)
+                    n1 = k+1;
+                    if n1 == m
+                        for n1 = 1:n
+                            J3(i,k) = J3(i,k) + v(m)* v(n1)*G(m,n1)*cos( del(n1)-del(m)+B(m,n1) );
+                        end
+                        J3(i,k) = J3(i,k) - v(m)^2*G(m,m)*cos( B(m,m) );
+                    else
+                        J3(i,k) = v(m)* v(n1)*-G(m,n1)*cos( del(n1)-del(m)+B(m,n1) );
+                    end
+                end
+            end
+            J4 = zeros(npq,npq);
+            for i = 1:npq
+                m = pq(i);
+                for k = 1:npq
+                    n1 = pq(k);
+                    if n1 == m
+                        for n1 = 1:n
+                            J4(i,k) = J4(i,k) - v(n1)*G(m,n1)*sin(del(n1)-del(m)+B(m,n1));
+                        end
+                        J4(i,k) = J4(i,k) - v(m)*G(m,m)*sin( B(m,m) );
+                    else
+                        J4(i,k) = -v(m)*G(m,n1)*sin( del(n1)-del(m)+ B(m,n1) );
+                    end
+                end                    
+            end
+            J = [J1 J2; J3 J4];
+            X = inv(J)*M;
+            dTh = X(1:n-1);
+            dV = X(n:end) ;
+            del(2:n) = dTh + del(2:n);    
+            k = 1;
+            for i = 2:n
+                if type(i) == 1
+                    v(i) = dV(k) + v(i);  
+                    k = k+1;
+                end
+            end
+            iter;
+            iter = iter + 1;
+            Tol = max(abs(M));
+            PQ=P-(j*Q);
+        end
+    case(2)
+        while(Tol > e & iter<=itermax)
+            P = zeros(n,1);
+            Q = zeros(n,1);
+            for i = 1:n
+                for k = 1:n
+                    P(i) = P(i) + v(i)* v(k)* G(i,k) * cos( B(i,k)+ del(k) - del(i)) ;
+                    Q(i) = Q(i) - v(i)* v(k)* G(i,k) * sin( B(i,k)+ del(k) - del(i)) ;
+                end
+            end
+            dPa = Psp-P;
+            dQa = Qsp-Q;
+            k = 1;
+            dQ = zeros(npq,1);
+            dP = dPa(2:n);
+            for i = 1:n
+                if type(i) == 1
+                    dQ(k,1) = dQa(i);
+                    k = k+1;
+                end
+            end
+            M = [dP; dQ];
+            for i=1:n-1
+                for j1=1:n-1
+                    bd(i,j1)=imag( y(i+1,j1+1) );
+                end
+            end
+            for i=1:npq
+                for j1=1:npq
+                    bdd(i,j1)=imag( y(pq(i),pq(j1)) );
+                end
+            end
+            dTh=-inv(bd)*dP;
+            dV=-inv(bdd)*dQ;
+            del(2:n) = dTh + del(2:n);
+            k = 1;
+            for i = 2:n
+                if type(i) == 1
+                    v(i) = dV(k) + v(i);
+                    k = k+1;
+                end
+            end
+            iter = iter + 1;
+            Tol = max(abs(M));
+            PQ=P-(j*Q);
+        end
+    case(3)
+        disp('EXIT')
+end
+disp('----------------Solution to Problem-----------------------------------')
+S=zeros(n);
+I=zeros(n);
+PL=zeros(n);
+v1=v+(j*del);
+for i=1:n
+    for j1=i:n
+        if i~=j1
+            I(i,j1)=(-y(i,j1))*(v1(i)-v1(j1));
+            I(j1,i)=-I(i,j1);
+            S(i,j1)=v1(i)*conj(I(i,j1));
+            S(j1,i)=v1(j1)*conj(I(j1,i));
+            PL(i,j1)=S(i,j1)+S(j1,i);
+        end
+    end
+end
+disp('Total No. of iterations:');
+disp(iter);
+disp('The magnitude of voltage at each bus:');
+disp('PU VALUE:');
+disp(abs(v));
+disp('ACTUAL VALUE:');
+disp(bmva*abs(v));
+disp('The load angle at each bus:');
+del*180/pi
+disp('The real power at each bus:');
+disp('PU VALUE:');
+disp(P);
+disp('ACTUAL VALUE:');
+disp(bmva*P);
+disp('The reactive power at each bus:');
+disp('PU VALUE:');
+disp(Q);
+disp('ACTUAL VALUE:');
+disp(bmva*Q);
+disp('The apparent power at each bus:');
+disp('PU VALUE:');
+disp(PQ);
+disp('ACTUAL VALUE:');
+disp(bmva*PQ);
+disp('The current at each bus:');
+disp('PU VALUE:');
+disp(I);
+disp('ACTUAL VALUE:');
+disp(bmva*I);
+disp('The line flow between buses:');
+disp('PU VALUE:');
+disp(S);
+disp('ACTUAL VALUE:');
+disp(bmva*S);
+disp('The line losses:');
+disp('PU VALUE:');
+disp(PL);
+disp('ACTUAL VALUE:');
+disp(bmva*PL);
