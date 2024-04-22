@@ -1,0 +1,170 @@
+% Modeling of transmission lines
+clear all
+clc;
+diary on
+diary('line modeling.txt')
+L=input('Enter the length of the transmission line:')
+f=input('Enter the operating frequency of the transmission line:')
+disp('Enter the line parameters per phase per unit length of the transmission line:')
+r1=input('Resistance:')
+l=input('Inductance:')
+c=input('Capacitance:')
+r=r1
+x=2*3.14*f*l
+y=j*2*3.14*f*c
+z=(r+(j*x))
+g1=sqrt(z*y)
+Zc=sqrt(z/y)
+g=L*g1
+A=cosh(g)
+b=sinh(g)
+B=Zc*sinh(g)
+c1=1/Zc
+C=c1*b
+D=A
+disp('To Calculate:')
+disp('1.The sending end voltage and current when receiving end power is given')
+disp('2.The sending end voltage and current when receiving end load impedance is given')
+disp('3.The receiving end voltage and current when sending end power is given')
+disp('4.The inductance to be installed and MVAR of the shunt reactor when the transmission line is open circuited')
+disp('5.The capacitance to be installed and MVAR of the shunt capacitor with the loading conditions specified')
+disp('6.Plot the voltage profile under different conditions')
+disp('7.Exit')
+ch=input('Enter your choice:')
+switch(ch)
+    case{1}
+     Vrl=input('Enter the receiving end voltage:')
+     Pr=input('Enter the receiving end power in watts:')
+     pf=input('Enter the receiving end power factor:')
+     Vr=Vrl/sqrt(3)
+     pi=acos(pf)
+     Qr=(Pr/pf)*sin(pi)
+     Ir=((Pr-(j*Qr))/(3*Vr))
+     Irr=abs(Ir)
+     Vs=(A*Vr)+(B*Ir)
+     Vsr=abs(Vs)
+     Is=(C*Vr)+(D*Ir)
+     Isr=abs(Is)
+     Vsl=sqrt(3)*Vs
+     Vslr=abs(Vsl)
+     pfs=cos(angle(Vs)-angle(Is))
+     pis=acos(pfs)
+     Ps=3*abs(Is)*abs(Vs)*cos(pis)
+     Qs=3*abs(Is)*abs(Vs)*sin(pis)
+     eff=(Pr/Ps)*100
+     Vrnl=abs(Vs)/abs(A);
+     reg=((Vrnl-Vr)/Vr)*100
+     RealPL=Ps-Pr
+     ReactivePL=Qs-Qr
+     TotalLosses=RealPL+ReactivePL
+    case{2}
+     Vrl=input('Enter the receiving end voltage:')
+     Vr=Vrl/sqrt(3)
+     Zl=input('Enter the load impedance:')
+     Ir=Vr/Zl;
+     pi=angle(Vr)-angle(Ir);
+     Pr=3*Vr*Ir*cos(pi)
+     Qr=3*Vr*Ir*sin(pi)
+     Vs=(A*Vr)+(B*Ir)
+     Vsr=abs(Vs)
+     Is=(C*Vr)+(D*Ir)
+     Isr=abs(Is)
+     Vsl=sqrt(3)*Vs
+     Vslr=abs(Vsl)
+     pfs=cos(angle(Vs)-angle(Is))
+     pis=acos(pfs)
+     Ps=3*abs(Is)*abs(Vs)*cos(pis)
+     Qs=3*abs(Is)*abs(Vs)*sin(pis)
+     eff=(Pr/Ps)*100
+     Vrnl=abs(Vs)/abs(A);
+     reg=((Vrnl-Vr)/Vr)*100
+     RealPL=Ps-Pr
+     ReactivePL=Qs-Qr
+     TotalLosses=RealPL+ReactivePL
+    case{3}
+     Vsl=input('Enter the sending end voltage:')
+     Ps=input('Enter the sending end real power in watts:')
+     Qs=input('Enter the sending end reactive power:')
+     Vs=Vsl/sqrt(3)
+     Is=((Ps-(j*Qs))/(3*Vs))
+     pi=angle(Is)*180/3.14
+     pf=cos(pi)
+     Isr=abs(Is)
+     Vr=(D*Vs)-(B*Is)
+     Vrr=abs(Vr)
+     Ir=(-C*Vs)+(A*Is)
+     Irr=abs(Ir)
+     Vrl=sqrt(3)*Vr
+     Vrlr=abs(Vrl)
+     pfr=cos(angle(Vr)-angle(Ir))
+     pir=acos(pfr)
+     Pr=3*abs(Ir)*abs(Vr)*cos(pir)
+     Qr=3*abs(Ir)*abs(Vr)*sin(pir)
+     eff=(Pr/Ps)*100
+     Vrnl=abs(Vs)/abs(A);
+     reg=((Vrnl-Vrr)/Vrr)*100
+     RealPL=Ps-Pr
+     ReactivePL=Qs-Qr
+     TotalLosses=RealPL+ReactivePL
+    case{4}
+     Vsl=input('Enter the sending end voltage:')
+     Vl=input('Enter the value of the voltage to which the receiving end voltage must be limited to:')
+     Vs=Vsl/sqrt(3)
+     beta=(2*3.14*f)*sqrt(l*c)
+     betaL=L*beta
+     Vr=(A*Vs)
+     Vrr=abs(Vr)
+     Ir=0
+     Irr=abs(Ir)
+     Vrl=sqrt(3)*Vr
+     Vrlr=abs(Vrl)
+     pfr=cos(angle(Vr)-angle(Ir))
+     pir=acos(pfr)
+     Vrnl=abs(Vs)/abs(A);
+     reg=((Vrnl-Vrr)/Vrr)*100
+     Xlsh=(sin(betaL)/(1-cos(betaL)))*abs(Zc)
+     Inductance=Xlsh/(2*3.14*f)
+     Qx=(Vl*Vl)/Xlsh
+    case{5}
+     Vsl=input('Enter the sending end voltage:')
+     Vl=input('Enter the value of the voltage to which the receiving end voltage must be limited to:')
+     Pr=input('Enter the receiving end power in watts:')
+     pf=input('Enter the receiving end power factor:')
+     Vs=Vsl/sqrt(3)
+     pi=acos(pf)
+     Qr=(Pr/pf)*sin(pi)
+     modA=abs(A)
+     modB=abs(B)
+     tetaA=angle(A)
+     tetaB=angle(B)
+     x=(Pr+((abs(A)*Vl*Vl*cos(tetaB-tetaA))/abs(B)))*(abs(B)/(Vsl*Vl))
+     y=acos(x)
+     del=tetaB-y
+     first=(Vsl*Vl*sin(tetaB-del))/abs(B)
+     second=(abs(A)*Vl*Vl*sin(tetaB-tetaA))/abs(B)
+     Qr1=first-second
+     Sc=(j*Qr1)-(j*Qr)
+     Xcsh=(Vl*Vl)/(-Sc)
+     Capacitance=1/(2*3.14*f*abs(Xcsh))
+    case(6)
+     Vs=input('Enter the sending end voltage:')
+     Ps=input('Enter the rated sending end power:')
+     pf=input('Enter the sending end power factor:')
+     Vsph=Vs/sqrt(3)
+     pi=acos(pf)
+     Qs=(Ps/pf)*sin(pi)
+     Is=((Ps-(j*Qs))/(3*Vs))
+     Vr=(D*Vsph)-(B*Is)
+     Vrl=sqrt(3)*Vr
+     Vrlr=abs(Vrl)
+     beta=(2*3.14*f)*sqrt(l*c)
+     betaL=L*beta
+     Vrsil=abs(Vsl)
+     Vrnl=abs(Vsl/cos(betaL))
+     Vssc=abs(j*Zc*sin(betaL))
+     plot(L,Vrlr,'kp',L,Vrsil,'kp',L,Vrnl,'kp',L,Vssc,'kp'),grid
+     xlabel('Sending End           Receiving End')
+     ylabel('Votage in Kv')
+    case(7)
+end
+diary off
