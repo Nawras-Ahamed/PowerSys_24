@@ -1,0 +1,175 @@
+% Power Flow Analysis - Gauss Seidal method
+clear all;
+clc;
+bmva=input('Enter the base MVA:');
+n=input('Enter the number of buses: ');
+y=zeros(n);
+for i=1:n
+    for j1=i:n
+        if i~=j1
+            disp('The buses are');
+            disp(i)
+            disp(j1)
+            z(i,j1)=input('Enter the impedance value: ');
+            z(j1,i)=z(i,j1);
+            hlc(i,j1)=input('Enter the half line charge value:');
+            hlc(j1,i)=hlc(i,j1);
+        end
+    end
+end
+'Input'
+disp(z);
+for i=1:n
+    for j1=1:n
+        if z(i,j1)~=0
+          y(i,j1)=-1/z(i,j1);
+        end
+            y(j1,i)=y(i,j1);
+            if i~=j1
+                y(i,i)=y(i,i)-y(i,j1)+hlc(i,j1);
+            end
+        end
+end
+'Admittance matrix'
+disp(y);
+v=[0;0;0];
+qmin=[0;0;0];
+qmax=[0;0;0];
+p=[0;0;0];
+q=[0;0;0];
+v(1)= input('Enter the slack bus voltage: ');
+type(1)=0;
+for i= 2:n
+    disp('The bus number is:');
+    disp(i);
+    disp('1. PQ bus 2. PV bus');
+    bt= input('Enter the bus type: ');
+    switch(bt)
+        case(1)
+            type(i)=1;
+            pg(i)=0;
+            qg(i)=0;
+            pl(i)= input('Enter the real power in pu: ');
+            ql(i)= input('Enter the reactive power in pu: ');
+            p(i)=pg(i)-pl(i);
+            q(i)=qg(i)-ql(i);
+            v(i)=1+(j*0);
+        case(2)
+            type(i)=2;
+            pg(i)= input('Enter the real power in pu: ');
+            qmin(i)= input('Enter the lower limit of the reactive power in pu: ');
+            qmax(i)= input('Enter the upper limit of the reactive power in pu: ');
+            qg(i)=0;
+            pl(i)=0;
+            ql(i)=0;
+            p(i)=pg(i)-pl(i);
+            q(i)=qg(i)-ql(i);
+            v(i)= input('Enter the voltage in pu: ');
+    end
+end
+dif = 10;
+iter=1;
+itermax = input('Enter the number of iterations: ');
+e= input('Enter the value of convergence criterion: ');
+al=input('Enter the acceleration factor: ');
+vprev=v;
+while( dif>e & iter<=itermax )  
+    abs(v);
+    abs(vprev);
+    vprev=v;
+    for i=2:n
+    sum = 0;
+    a=0;
+    b=0;
+    for k = 1:n
+        if i ~= k
+            sum = sum + y(i,k)*v(k);
+        end
+        if i<k
+            a=a+y(i,k)*v(k);
+        end
+        if i>k
+            b=b+y(i,k)*vprev(k);
+        end
+    end
+    if type(i)==2
+        q(i) = -imag(conj(v(i))*(sum + y(i,i)*v(i)));
+        if (q(i) > qmax(i)) | (q(i) < qmin(i))
+            if q(i) < qmin(i)
+                q(i) = qmin(i);
+            else
+                q(i) = qmax(i);
+            end
+        end
+    end  
+    v(i)=(1/y(i,i))*(((p(i)-j*q(i))/conj(v(i)))-a-b);
+    v(i)=vprev(i)+al*(v(i)-vprev(i));
+    end        
+dif=max(abs(abs(v(2:n))-abs(vprev(2:n))));
+iter;
+iter=iter+1;
+end
+disp('----------------Solution to Problem-----------------------------------')
+sum1=0;
+sum2=0;
+for i=2:n
+    sum1=sum1+(v(1)*(-y(1,i)));
+    sum2=sum2+(v(i)*(-y(1,i)));
+end
+pq=[0;0;0];
+pq(i)=p(i)-(j*q(i));
+pq(1)=conj(v(i))*(sum1-sum2);
+S=zeros(n);
+I=zeros(n);
+PL=zeros(n);
+for i=1:n
+    for j1=i:n
+        if i~=j1
+            I(i,j1)=(-y(i,j1))*(v(i)-v(j1));
+            I(j1,i)=-I(i,j1);
+            S(i,j1)=v(i)*conj(I(i,j1));
+            S(j1,i)=v(j1)*conj(I(j1,i));
+            PL(i,j1)=S(i,j1)+S(j1,i);
+        end
+    end
+end
+disp('Total No. of iterations:');
+disp(iter);
+disp('The magnitude of voltage at each bus:');
+disp('PU VALUE:');
+disp(abs(v));
+disp('ACTUAL VALUE:');
+disp(bmva*abs(v));
+disp('The load angle at each bus:');
+delta = angle(v)*180/pi;
+disp('delta');
+disp('The real power at each bus:');
+disp('PU VALUE:');
+disp(p);
+disp('ACTUAL VALUE:');
+disp(bmva*p);
+disp('The reactive power at each bus:');
+disp('PU VALUE:');
+disp(q);
+disp('ACTUAL VALUE:');
+disp(bmva*q);
+disp('The apparent power at each bus:');
+disp('PU VALUE:');
+disp(pq);
+disp('ACTUAL VALUE:');
+disp(bmva*pq);
+disp('The current at each bus:');
+disp('PU VALUE:');
+disp(I);
+disp('ACTUAL VALUE:');
+disp(bmva*I);
+disp('The line flow between buses:');
+disp('PU VALUE:');
+disp(S);
+disp('ACTUAL VALUE:');
+disp(bmva*S);
+disp('The line losses:');
+disp('PU VALUE:');
+disp(PL);
+disp('ACTUAL VALUE:');
+disp(bmva*PL);
