@@ -1,0 +1,69 @@
+clear all
+clc
+k=input('Enter the number of generating units');
+pd=input('Enter the total system demand');
+sum1=0;
+sum2=0;
+for i=1:k;
+    disp('UNIT');
+    disp(i);
+    a(i)=input('Enter the cost coefficient a for unit');
+    b(i)=input('Enter the cost coefficient b for unit');
+    c(i)=input('Enter the cost coefficient c for unit');
+    PGmin(i)=input('Enter the minimum generation limit');
+    PGmax(i)=input('Enter the maximum generation limit');
+end
+%calculation of inc.cost of received power
+for i=1:k
+    sum1=sum1+b(i)/(2*a(i));
+    sum2=sum2+1/(2*a(i));
+end
+lambda=(pd+sum1)/sum2
+for i=1:k
+    PG(i)=(lambda-b(i))/(2*a(i));
+end 
+disp(PG);
+for i=1:k
+    if(PG(i)<PGmin(i))
+        PG(i)=PGmin(i);
+        pdnew=pd-PG(i)
+        sum1=0;sum2=0;
+        for j=1:k
+            if(j==1)
+                sum1=sum1+b(j)/(2*a(j));
+                sum2=sum2+1/(2*a(j));
+            end
+        end
+        disp('in MIN violation');
+        lambda=(pdnew+sum1)/sum2;
+        for j=1:k
+            if(j==i)
+                PG(j)=(lambda-b(j))/(2*a(j));
+            end
+        end
+        disp(PG);
+    else
+        if(PG(i)>PGmax(i));
+            PG(i)=PGmax(i)
+            pdnew=pd-PG(i);
+            sum1=0;sum2=0;
+            for j=1:k
+                if(j~=i)
+                    sum1=sum1+b(j)/(2*a(j));
+                    sum2=sum2+1/(2*a(j));
+                end
+            end
+            disp('in MAX violattion');
+            lambda=(pdnew+sum1)/sum2
+            for j=1:k
+                if(j~=i)
+                    PG(j)=(lambda-b(j))/(2*a(j));
+                end
+            end
+        end
+        disp(PG);
+    end
+end
+disp('optimal generation allocation');
+disp(PG);
+         
