@@ -1,0 +1,116 @@
+% computation of transmission line parameters
+clear all;
+clc
+diary on
+diary('output.txt')
+c=input('Enter the no. of conductors per phase:')
+Dc=input('Enter the diameter of each conductor in inches:')
+Db=input('Enter the bundle spacing in inches:')
+disp('Type of configuration used:')
+disp('1.a1b1c1-c2b2a2')
+disp('2.a1c1b1-a2b2c2')
+disp('3.Exit')
+ch=input('Enter your choice:')
+switch(ch)
+    case(1)
+     Da1c2=input('Enter the distance between a1 and c2 in m:')
+     Db1b2=input('Enter the distance between b1 and b2 in m:')
+     Da2c1=input('Enter the distance between c1 and a2 in m:')
+     H1=input('Enter the distance between a1 and b1 in m:')
+     H2=input('Enter the distance between b1 and c1 in m:')
+     dc=Dc*0.0254
+     r=dc/2
+     d=Db*0.0254
+     GMR=r*exp(-1/4)
+     Da1c1=H1+H2
+     Da2c2=H1+H2
+     Da1a2=sqrt((Da1c2*Da1c2)+(Da1c1*Da1c1))
+     Dc1c2=sqrt((Da2c1*Da2c1)+(Da1c1*Da1c1))
+     d1=(Db1b2-Da1c2)/2
+     d2=(Db1b2-Da2c1)/2
+     d3=Db1b2-d1
+     d4=Db1b2-d2
+     Da1b1=sqrt((H1*H1)+(d1*d1))
+     Db2c2=sqrt((H1*H1)+(d1*d1))
+     Db1c1=sqrt((H2*H2)+(d2*d2))
+     Da2b2=sqrt((H2*H2)+(d2*d2))
+     Da1b2=sqrt((H1*H1)+(d3*d3))
+     Db1c2=sqrt((H1*H1)+(d3*d3))
+     Db2c1=sqrt((H2*H2)+(d4*d4))
+     Da2b1=sqrt((H2*H2)+(d4*d4))
+     D1=(Da1b1*Da1b2*Da2b1*Da2b2)^(1/4)
+     D2=(Db1c1*Db1c2*Db2c1*Db2c2)^(1/4)
+     D3=(Da1c1*Da1c2*Da2c1*Da2c2)^(1/4)
+     GMD=(D1*D2*D3)^(1/3)
+     if c==1
+         Ds=GMR
+         rs=r
+     elseif c==2
+         Ds=sqrt(GMR*d)
+         rs=sqrt(r*d)
+     elseif c==3
+         Ds=(GMR1*d*d)^(1/3)
+         rs=(r*d*d)^(1/3)
+     elseif c==4
+         Ds=1.09*(GMR1*d*d*d)^(1/4)
+         rs=1.09*(r*d*d*d)^(1/4)
+     end
+     Dsa=sqrt(Ds*Da1a2)
+     Dsb=sqrt(Ds*Db1b2)
+     Dsc=sqrt(Ds*Dc1c2)
+     Ra=sqrt(rs*Da1a2)
+     Rb=sqrt(rs*Db1b2)
+     Rc=sqrt(rs*Dc1c2)
+     GMRl=(Dsa*Dsb*Dsc)^(1/3)
+     GMRc=(Ra*Rb*Rc)^(1/3)
+     disp('The inductance in milliHenry is:')
+     L=0.2*log(GMD/GMRl)
+     disp('The capacitance in microFarad is:')
+     C=0.0556/(log(GMD/GMRc))
+    case(2)
+     Da1a2=input('Enter the distance between a1 and c2 in m:')
+     Db2c1=input('Enter the distance between b1 and b2 in m:')
+     Db1c2=input('Enter the distance between c1 and a2 in m:')
+     H1=input('Enter the distance between a1 and b1 in m:')
+     H2=input('Enter the distance between b1 and c1 in m:')
+     dc=Dc*0.0254
+     r=dc/2
+     d=Db*0.0254
+     GMR=r*exp(-1/4)
+     Da1b1=H1+H2
+     Da2c2=H1+H2
+     Da1c2=sqrt((Da1a2*Da1a2)+(Da2c2*Da2c2))
+     Da2b1=sqrt((Db1c2*Db1c2)+(Da2c2*Da2c2))
+     d1=(Db2c1-Da1a2)/2
+     d2=(Db2c1-Db1c2)/2
+     d3=Db2c1-d1
+     d4=Db2c1-d2
+     Da1c1=sqrt((H1*H1)+(d1*d1))
+     Da2b2=sqrt((H1*H1)+(d1*d1))
+     Db1c1=sqrt((H2*H2)+(d2*d2))
+     Db2c2=sqrt((H2*H2)+(d2*d2))
+     Da1b2=sqrt((H1*H1)+(d3*d3))
+     Da2c1=sqrt((H1*H1)+(d3*d3))
+     Db1b2=sqrt((H2*H2)+(d4*d4))
+     Dc1c2=sqrt((H2*H2)+(d4*d4))
+     D1=(Da1b1*Da1b2*Da2b1*Da2b2)^(1/4)
+     D2=(Db1c1*Db1c2*Db2c1*Db2c2)^(1/4)
+     D3=(Da1c1*Da1c2*Da2c1*Da2c2)^(1/4)
+     GMD=(D1*D2*D3)^(1/3)
+     Ds=sqrt(GMR*d)
+     rs=sqrt(r*d)
+     Dsa=sqrt(Ds*Da1a2)
+     Dsb=sqrt(Ds*Db1b2)
+     Dsc=sqrt(Ds*Dc1c2)
+     Ra=sqrt(rs*Da1a2)
+     Rb=sqrt(rs*Db1b2)
+     Rc=sqrt(rs*Dc1c2)
+     GMRl=(Dsa*Dsb*Dsc)^(1/3)
+     GMRc=(Ra*Rb*Rc)^(1/3)
+     disp('The inductance in milliHenry is:')
+     L=0.2*log(GMD/GMRl)
+     disp('The capacitance in microFarad is:')
+     C=0.0556/(log(GMD/GMRc))
+    case(3)
+end
+diary off
